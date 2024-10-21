@@ -26,10 +26,10 @@ app.use(express.static("express"));
 app.get("/api/welcome", (req, res) => {
     res.status(200).send({message: "Welcome to GdS-API" });
 });
-app.use('/', (req,res) =>{
-    res.sendFile(path.join(__dirname, '/index.html'));
-    //__dirname : It will resolve to your project folder.
-  });
+// app.use('/', (req,res) =>{
+//     res.sendFile(path.join(__dirname, '/index.html'));
+//     //__dirname : It will resolve to your project folder.
+//   });
 
 
 // Database connection

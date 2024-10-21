@@ -23,18 +23,15 @@ app.use(express.json());
 app.use(express.static("express"));
 
 // default URL for website
+app.get("/api/welcome", (req, res) => {
+    res.status(200).send({message: "Welcome to GdS-API" });
+});
 app.use('/', (req,res) =>{
     res.sendFile(path.join(__dirname, '/index.html'));
     //__dirname : It will resolve to your project folder.
   });
 
-//const server = http.createServer(app);
-// app.get('/', (req, res) => {
-//     res.send('Bienvenu sur le server GdS!')
-//   })
-//   app.get('/', function(req, res){
-//     res.redirect('/index.html');
-// });
+
 // Database connection
 connectDB();
 

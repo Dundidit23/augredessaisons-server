@@ -1,36 +1,41 @@
-// userRoutes.js
-const express = require('express');
+//userRoutes.js
+const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+const  authenticate = require("../middlewares/authMiddleware");
+const authAdmin  = require("../middlewares/authAdmin");
 const {
   registerUser,
   loginUser,
-  getAllUsers,
   getUserById,
   updateUserById,
   deleteUserById,
-  dashboard,
-} = require('../controllers/userControllers');
+  getAllUsers
+} = require("../controllers/userControllers");
+const {
+  requestPasswordReset,
+  resetPassword,
+} = require("../controllers/resetPasswordController");
 
 // Register a new user
-router.post('/register', registerUser);
+router.post("/register", registerUser);
 
 // Login user
-router.post('/login', loginUser);
+router.post("/login", loginUser);
 
-// Get all users
-router.get('/', authMiddleware, getAllUsers);
+// Get one user by ID (authenticated user only)
+router.get("/:id", authenticate, getUserById);
 
-// Get one user by ID
-router.get('/:id', authMiddleware, getUserById);
+// Update user by ID (authenticated user only)
+router.put("/:id", authenticate, updateUserById);
 
-// Update user by ID
-router.put('/:id', authMiddleware, updateUserById);
+// Delete user by ID (optional, only if you want users to delete their account)
+router.delete("/:id", authenticate, deleteUserById);
 
-// Delete user by ID
-router.delete('/:id', authMiddleware, deleteUserById);
+router.post("/request-reset-password", requestPasswordReset);
 
-// Protected route for admin dashboard
-router.get('/dashboard', authMiddleware, dashboard);
+// Route pour réinitialiser le mot de passe
+router.post("/reset-password", resetPassword);
+
+router.get("/", authAdmin, getAllUsers);
 
 module.exports = router;

@@ -6,10 +6,12 @@ const rootDir = path.resolve(__dirname, '..');
 
 module.exports = {
     rootDir,
-    uploadsDir: path.join(rootDir, 'uploads/'),
+    uploadsDir: path.join(rootDir, 'uploads'),
     routes: {
         products: '/api/products',
         categories: '/api/categories',
-        users: '/api/users'
+        users: '/api/users',
+        admins: '/api/admins',
+        messages: "/api/messages"
     }
 };

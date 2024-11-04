@@ -2,8 +2,12 @@
 const Product = require('../models/Product'); // Modèle du produit
 
 const createProduct = async (req, res) => {
+ console.log(`Tentative de création d'un produit`);
+
   try {
     const { name, description, price, stock, category } = req.body;
+   
+
 
     // Vérifiez que tous les champs obligatoires sont fournis
     if (!name || !description || !price || !category) {
@@ -11,7 +15,7 @@ const createProduct = async (req, res) => {
     }
 
    // const imageUrl = req.file ? req.file.path : null;  // Vérifiez l'image
-const imageUrl = `/uploads/${req.file.filename}`.replace(/\\/g, '/')
+const imageUrl = `uploads/${req.file.filename}`.replace(/\\/g, '/')
     const newProduct = await Product.create({
       name,
       description,
@@ -22,8 +26,10 @@ const imageUrl = `/uploads/${req.file.filename}`.replace(/\\/g, '/')
     });
 
     res.status(201).json(newProduct);
-   // console.log('Requête reçue :', req.body);
-//console.log('Fichier reçu :', req.file);
+   console.log('Requête reçue :', req.body);
+   console.log('Fichier reçu :', req.file);
+   console.log('Produit créé avec succès');
+
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -63,7 +69,7 @@ const getAllProducts = async (req, res) => {
 const getOneProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    if (!product) return res.status(404).json({ message: 'Le produit est introuvable' });
     res.status(200).json(product);
   } catch (error) {
     console.error(error.message);
@@ -83,7 +89,7 @@ const updateProductById = async (req, res) => {
     // Vérifiez si une nouvelle image a été uploadée
     if (req.file) {
       // Remplacer les antislashs par des slashs dans le chemin de l'image pour éviter les problèmes
-      updatedData.image = `/uploads/${req.file.filename}`.replace(/\\/g, '/');
+      updatedData.image = `uploads/${req.file.filename}`.replace(/\\/g, '/');
     }
 
     // Mettre à jour le produit dans la base de données
@@ -109,11 +115,11 @@ const deleteProductById = async (req, res) => {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       console.log('Produit non trouvé');
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Produit non trouvé' });
     }
 
     console.log('Produit supprimé avec succès');
-    res.status(200).json({ message: 'Product has been deleted' });
+    res.status(200).json({ message: 'Le produit a été supprimé' });
   } catch (error) {
     console.error('Erreur lors de la suppression du produit:', error.message);
     res.status(500).json({ message: 'Server error' });

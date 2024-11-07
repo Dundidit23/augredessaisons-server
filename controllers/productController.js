@@ -1,4 +1,6 @@
 // server/controllers/productController.js
+const fs = require('fs'); // Importer le module fs
+const path = require('path');
 const Product = require('../models/Product'); // Modèle du produit
 
 const createProduct = async (req, res) => {
@@ -117,6 +119,18 @@ const deleteProductById = async (req, res) => {
       console.log('Produit non trouvé');
       return res.status(404).json({ message: 'Produit non trouvé' });
     }
+
+    // Chemin de l'image à supprimer
+    const imagePath = path.join(__dirname, '..', product.image); // Adapte ce chemin si nécessaire
+
+    // Supprimer l'image du système de fichiers
+    fs.unlink(imagePath, (err) => {
+      if (err) {
+        console.error('Erreur lors de la suppression de l\'image:', err);
+      } else {
+        console.log('Image supprimée avec succès');
+      }
+    });
 
     console.log('Produit supprimé avec succès');
     res.status(200).json({ message: 'Le produit a été supprimé' });

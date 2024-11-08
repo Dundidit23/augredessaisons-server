@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 
 const authAdmin = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Accès refusé" });
+  if (!token) return res.status(401).json({ message: "Token manquant" });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -16,7 +16,7 @@ const authAdmin = (req, res, next) => {
     req.admin = decoded; // Assigne l'admin décodé au request pour les opérations ultérieures
     next();
   } catch (err) {
-    res.status(403).json({ message: "Accès interdit" });
+    res.status(403).json({ message: "Token invalide ou expiré" });
   }
 };
 

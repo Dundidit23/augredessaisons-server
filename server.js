@@ -1,7 +1,6 @@
 //server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-//const http = require('http');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
 const path = require('path'); // Import the path module

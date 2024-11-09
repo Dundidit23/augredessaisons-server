@@ -5,7 +5,8 @@ const {
   adminRegister,
   updateAdmin,
   deleteAdmin,
-  getAllAdmins
+  getAllAdmins,
+  updateStatus
 } = require('../controllers/adminAuthController');
 const authAdmin = require('../middlewares/authAdmin'); // Assurez-vous que ce middleware est importé
 
@@ -16,6 +17,8 @@ router.post('/login', adminLogin);
 
 // Route pour enregistrer un nouvel administrateur
 router.post('/register', adminRegister);
+
+router.post('/update-status', authAdmin, updateStatus);
 
 // Route pour mettre à jour un administrateur
 router.put('/:id', authAdmin, updateAdmin);

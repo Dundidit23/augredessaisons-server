@@ -17,11 +17,7 @@ const userSchema = new mongoose.Schema({
      enum: ['user', 'admin'],
      default: 'user' 
   },
-  status: {
-    type: String,
-    enum: ['online', 'offline'],
-    default: 'offline',
- },
+ 
   avatar: {
     type: String,
     required: false
@@ -30,6 +26,14 @@ const userSchema = new mongoose.Schema({
      type: String,
      required: true 
     },
+    status: {
+      type: String,
+      enum: ['online', 'offline'],
+      default: 'offline',
+   },
+    isOnline: { type: Boolean, default: false },
+    lastActive: { type: Date }
+
 },{
      timestamps: true  
     // timestamps: { createdAt: 'created_at', updatedAt: 'updated_at'  }}

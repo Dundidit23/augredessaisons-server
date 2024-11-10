@@ -9,100 +9,133 @@ const getUserById = async (req, res) => {
 
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
     res.status(200).json(user);
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'utilisateur :", error);
+    console.error("Erreur lors de la récupération de l'utilisateur:", error.message);
     res.status(500).json({ message: "Erreur lors de la récupération de l'utilisateur" });
   }
 };
 
 // Enregistrement d’un utilisateur
 const registerUser = async (req, res) => {
-    console.log("Données reçues pour l'inscription :", req.body);
-    const { username, email, password } = req.body;
+  const { username, email, password } = req.body;
 
-    // Log des données reçues pour vérifier leur structure
-  
-    try {
-        // Vérification que tous les champs sont remplis
-        if (!username || !email || !password) {
-            console.log("Vérification des champs requis échouée :", req.body);
-            return res.status(400).json({ error: "Tous les champs sont requis" });
-        }
-
-        // Vérification de l'existence d'un utilisateur avec le même email ou nom d'utilisateur
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-        if (existingUser) {
-            console.log("L'email ou le nom d'utilisateur est déjà pris :", existingUser);
-            return res.status(400).json({ error: "L'email ou le nom d'utilisateur est déjà pris" });
-        }
-
-        // Hachage du mot de passe pour sécurité
-        const hashedPassword = await argon2.hash(password);
-
-        // Création d'un nouvel utilisateur avec le mot de passe haché
-        const newUser = new User({ username, email, password: hashedPassword });
-        await newUser.save();
-
-        // Envoi de la réponse avec le statut 201 et le nouvel utilisateur (sans le mot de passe)
-        res.status(201).json({ 
-            message: "Utilisateur bien enregistré un vrai succès",
-            user: { 
-                _id: newUser._id,
-                username: newUser.username,
-                email: newUser.email
-            }
-        });
-
-    } catch (error) {
-        console.error("Erreur lors de l'enregistrement de l'utilisateur:", error);
-        res.status(500).json({ error: "Erreur interne lors de l'enregistrement" });
+  try {
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "Tous les champs sont requis" });
     }
+
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ error: "L'email ou le nom d'utilisateur est déjà pris" });
+    }
+
+    const hashedPassword = await argon2.hash(password);
+    const newUser = new User({ username, email, password: hashedPassword });
+    await newUser.save();
+
+    res.status(201).json({ message: "Utilisateur bien enregistré" });
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement:", error.message);
+    res.status(500).json({ error: "Erreur interne lors de l'enregistrement" });
+  }
 };
 
 // Connexion d’un utilisateur
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  // Vérification des champs requis
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email et mot de passe dovient être présents' });
+    return res.status(400).json({ error: "Email et mot de passe sont requis" });
   }
 
   try {
-    // Recherche de l'utilisateur par email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "Identifiants incorrects" });
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    // Vérification du mot de passe
-    const isPasswordValid = await argon2.verify(user.password, password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Identifiants incorrects' });
+    const validPassword = await argon2.verify(user.password, password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Mot de passe incorrect" });
     }
 
-    // Génération du token JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Mettre à jour le statut en ligne
+    user.isOnline = true;
+    user.lastActive = new Date();
+    await user.save();
 
-    // Réponse avec le token et les informations de l'utilisateur
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
     res.status(200).json({
-      message: 'Connexion réussie',
+      message: "Connexion réussie",
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role, 
-        status: user.status
+        role: user.role,
+        isOnline: user.isOnline,
+        lastActive: user.lastActive
       }
     });
   } catch (error) {
-    console.error('Erreur lors de la connexion:', error);
-    res.status(500).json({ message: 'Erreur interne lors de la connexion' });
+    console.error("Erreur lors de la connexion :", error);
+    res.status(500).json({ error: "Erreur interne lors de la connexion" });
   }
 };
+
+const logoutUser = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    user.isOnline = false;
+    await user.save();
+
+    res.status(200).json({ message: "Utilisateur déconnecté avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la déconnexion:", error.message);
+    res.status(500).json({ error: "Erreur interne lors de la déconnexion" });
+  }
+};
+
+
+const addUser = async (req, res) => {
+  const { username, email, password, role } = req.body;
+
+  if (!username || !email || !password || !role) {
+    return res.status(400).json({ error: "Tous les champs sont requis" });
+  }
+
+  try {
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(409).json({ error: "L'email ou le nom d'utilisateur est déjà pris" });
+    }
+
+    const hashedPassword = await argon2.hash(password);
+    const newUser = new User({ username, email, password: hashedPassword, role });
+    await newUser.save();
+
+    res.status(201).json({ message: "Utilisateur ajouté avec succès", user: newUser });
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'utilisateur :", error);
+    res.status(500).json({ error: "Erreur interne" });
+  }
+};
+
 
 // Suppression d’un utilisateur par ID
 const deleteUserById = async (req, res) => {
@@ -156,4 +189,4 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { getUserById, registerUser, loginUser, deleteUserById, updateUserById, getAllUsers };
+module.exports = { getUserById, registerUser, loginUser, logoutUser, deleteUserById, updateUserById, getAllUsers, addUser };

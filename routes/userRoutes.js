@@ -6,10 +6,12 @@ const authAdmin  = require("../middlewares/authAdmin");
 const {
   registerUser,
   loginUser,
+  logoutUser,
   getUserById,
   updateUserById,
   deleteUserById,
-  getAllUsers
+  getAllUsers,
+  addUser
 } = require("../controllers/userControllers");
 const {
   requestPasswordReset,
@@ -18,18 +20,24 @@ const {
 
 // Register a new user
 router.post("/register", registerUser);
-
-// Login user
 router.post("/login", loginUser);
+router.post("/logout", authenticate, logoutUser);
 
-// Get one user by ID (authenticated user only)
+router.post('/', authAdmin, async (req, res) => {
+  try {
+    await addUser(req, res);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'un utilisateur:", error.message);
+    res.status(500).json({ message: "Erreur interne lors de l'ajout d'un utilisateur" });
+  }
+});
+
+router.get("/", authAdmin, getAllUsers);
+
 router.get("/:id", authenticate, getUserById);
-
-// Update user by ID (authenticated user only)
 router.put("/:id", authenticate, updateUserById);
+router.delete("/:id", authAdmin, deleteUserById);
 
-// Delete user by ID (optional, only if you want users to delete their account)
-router.delete("/:id", authenticate, deleteUserById);
 
 router.post("/request-reset-password", requestPasswordReset);
 

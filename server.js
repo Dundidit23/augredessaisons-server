@@ -1,9 +1,11 @@
 //server.js
 const express = require('express');
+const Stripe = require('stripe');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
-const path = require('path'); // Import the path module
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const path = require('path');
 const paths = require('./config/paths');
 const multer = require('multer');
 const connectDB = require('./config/db');
@@ -14,11 +16,17 @@ const categoriesRoutes = require('./routes/categoriesRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes'); 
 const messageRoutes = require("./routes/messageRoutes");
+const http = require('http'); 
+const configureSocketIo = require('./config/socketIo'); // Importer votre configuration Socket.IO
 
 const app = express();
 
 // Middleware de CORS
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173', // Remplacez par l'URL de votre frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 
 // Middleware pour parser les requêtes
 app.use(express.urlencoded({ extended: true }));
@@ -30,13 +38,8 @@ app.get("/", function(req, res) {
     res.send("Welcome to GdS-API");
 });
 
-
-
-
 // Configuration de multer pour l'upload de fichiers
-const upload = multer({ dest: paths.uploadsDir }); // Destination des fichiers
-
-// Utiliser un chemin statique pour les fichiers uploadés
+const upload = multer({ dest: paths.uploadsDir });
 app.use('/uploads', express.static(paths.uploadsDir));
 
 // Routes
@@ -52,14 +55,36 @@ app.use((error, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
+app.post('/create-payment-intent', async (req, res) => {
+    const { amount } = req.body;
+  
+    try {
+      // Créer un PaymentIntent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount, // Montant en cents
+        currency: 'eur', // La devise
+      });
+  
+      // Renvoyer le client secret au frontend
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ error: error.message });
+    }
+  });
+
 // Database connection
 connectDB();
 
 // Start server
 const port = normalizePort(process.env.PORT || '4000');
-//const server = http.createServer(app);
-//server.listen(port, () => {
-    const server = app.listen(port, () => {
+const server = http.createServer(app); // Créer le serveur HTTP
+
+const io = configureSocketIo(server); // Configurer Socket.IO en utilisant le serveur
+
+server.listen(port, () => {
     const addr = server.address();
     const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
     console.log('Server is listening on ' + bind);

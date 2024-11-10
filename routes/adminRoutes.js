@@ -6,7 +6,8 @@ const {
   updateAdmin,
   deleteAdmin,
   getAllAdmins,
-  updateStatus
+  updateStatus,
+  adminLogout
 } = require('../controllers/adminAuthController');
 const authAdmin = require('../middlewares/authAdmin'); // Assurez-vous que ce middleware est importé
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Route pour la connexion admin
 router.post('/login', adminLogin);
+router.post('/logout', adminLogout);
 
 // Route pour enregistrer un nouvel administrateur
 router.post('/register', adminRegister);

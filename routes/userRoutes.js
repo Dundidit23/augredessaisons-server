@@ -32,6 +32,10 @@ router.post('/', authAdmin, async (req, res) => {
   }
 });
 
+
+
+
+
 router.get("/", authAdmin, getAllUsers);
 
 router.get("/:id", authenticate, getUserById);

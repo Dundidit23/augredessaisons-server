@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const path = require('path');
 const paths = require('./config/paths');
 const multer = require('multer');
 const connectDB = require('./config/db');
@@ -18,15 +17,21 @@ const adminRoutes = require('./routes/adminRoutes');
 const messageRoutes = require("./routes/messageRoutes");
 const http = require('http'); 
 const configureSocketIo = require('./config/socketIo'); // Importer votre configuration Socket.IO
-
+const jwt = require('jsonwebtoken');
 const app = express();
 
 // Middleware de CORS
 app.use(cors({
     origin: 'http://localhost:5173', // Remplacez par l'URL de votre frontend
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 }));
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 
 // Middleware pour parser les requêtes
 app.use(express.urlencoded({ extended: true }));
@@ -37,6 +42,9 @@ app.use(bodyParser.json());
 app.get("/", function(req, res) {
     res.send("Welcome to GdS-API");
 });
+
+
+
 
 // Configuration de multer pour l'upload de fichiers
 const upload = multer({ dest: paths.uploadsDir });
@@ -49,6 +57,7 @@ app.use(paths.routes.users, userRoutes);
 app.use(paths.routes.admins, adminRoutes);
 app.use(paths.routes.messages, messageRoutes);
 
+console.log(`Routes définies : ${paths.routes.messages}`);
 // Middleware d'erreur
 app.use((error, req, res, next) => {
     console.error(error.stack);
